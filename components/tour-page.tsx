@@ -1,0 +1,104 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { Icon, Contours } from "@/components/icons";
+import { SiteFooter, SiteHeader } from "@/components/site-chrome";
+import { RouteBar, TourHeader } from "@/components/tour-header";
+import { TourDialog } from "@/components/tour-dialog";
+import { bookUrl, days, description, faq, overview, prices, recommendations, stops, title } from "@/lib/tour";
+
+export default function TourPage() {
+  const [scrollY, setScrollY] = useState(0);
+  const [active, setActive] = useState("highlights");
+  const [dialog, setDialog] = useState<"photos" | "highlights" | null>(null);
+  const [dayPhotos, setDayPhotos] = useState<{ photos: string[]; index: number; title: string } | null>(null);
+  const [expandedAll, setExpandedAll] = useState(false);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLUListElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [routeVisible, setRouteVisible] = useState(false);
+  const [carouselBounds, setCarouselBounds] = useState({ back: false, forward: false });
+  const [stickyTop, setStickyTop] = useState(105);
+  const [stickyHeight, setStickyHeight] = useState(300);
+  const sticky = scrollY >= stickyTop;
+  const updateCarousel = () => {
+    if (!carouselRef.current) return;
+    const track = carouselRef.current;
+    setCarouselBounds({ back: track.scrollLeft > 1, forward: track.scrollLeft + track.clientWidth < track.scrollWidth - 1 });
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+      if (window.scrollY < (heroRef.current?.offsetTop ?? 0)) setActive("highlights");
+      setRouteVisible((heroRef.current?.getBoundingClientRect().bottom ?? Infinity) <= 0);
+    };
+    const measure = () => {
+      if (!stickyRef.current) return;
+      const rect = stickyRef.current.getBoundingClientRect();
+      setStickyTop(rect.top + window.scrollY);
+      setStickyHeight(rect.height);
+      updateCarousel();
+    };
+    handleScroll();
+    const frame = requestAnimationFrame(measure);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", handleScroll); window.removeEventListener("resize", measure); };
+  }, []);
+
+  useEffect(() => {
+    const sections = ["highlights", "itinerary", "dates"].map((id) => document.getElementById(id)).filter((item): item is HTMLElement => item !== null);
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (visible) setActive(visible.target.id);
+    }, { rootMargin: "-150px 0px -68% 0px" });
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  return <>
+    <SiteHeader hidden={scrollY > 75} />
+    <main id="main-content" className="bg-paper-2 pt-[60px] pb-[92px] md:pt-[72px] md:pb-[104px]">
+      <nav aria-label="Breadcrumb" className="border-b border-card-line bg-paper"><ol className="hide-scrollbar mx-auto flex max-w-[1280px] items-center gap-x-2 overflow-x-auto px-5 py-1.5 text-[12.5px] md:px-10"><li className="shrink-0"><Link href="/" className="text-mute transition-colors hover:text-coral hover:underline">Home</Link></li><li aria-hidden="true" className="shrink-0 text-faint">/</li><li className="shrink-0"><a href="https://sulawesi.com/en/tours" className="text-mute hover:text-coral hover:underline">Sulawesi Tours</a></li><li aria-hidden="true" className="shrink-0 text-faint">/</li><li className="shrink-0"><a href="https://sulawesi.com/en/tours/find-your-tour" className="text-mute hover:text-coral hover:underline">Find your tour</a></li><li aria-hidden="true" className="shrink-0 text-faint">/</li><li className="truncate text-ink">{title}</li></ol></nav>
+      <div aria-hidden="true" className="h-px" />
+      <div ref={stickyRef} style={sticky ? { height: stickyHeight } : undefined}><TourHeader compact={sticky} active={active} /></div>
+      <div ref={heroRef} className="relative h-[30vh] min-h-[200px] max-h-[360px] w-full overflow-hidden bg-ink/10 md:h-[37vh]"><Image src="/images/tangkoko_image_landscape_4598.webp" alt={`${title}: ${description}`} fill preload sizes="100vw" className="object-cover" /><button type="button" onClick={() => setDialog("photos")} className="absolute end-4 bottom-4 rounded-full bg-paper/95 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[.08em] text-ink shadow-tile-soft backdrop-blur-sm transition-colors hover:bg-paper md:end-8 md:bottom-6">View all 20 photos</button></div>
+
+      <section id="highlights" className="relative mx-auto max-w-[1280px] scroll-mt-[176px] px-5 pt-10 md:scroll-mt-[140px] md:px-10 md:pt-12"><span aria-hidden="true" className="pointer-events-none absolute inset-y-0 inset-x-5 overflow-hidden select-none md:inset-x-10"><Contours className="absolute -right-16 -bottom-24 hidden h-[330px] w-[300px] text-ink lg:block" /></span><div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+        <div><h2 className="font-serif text-[26px] font-semibold leading-tight text-ink md:text-[34px]">About this tour</h2><p className="mt-4 max-w-[64ch] text-[16px] leading-[1.7] text-ink-2 md:text-[17px]">{overview}</p><div className="mt-9"><h3 className="font-mono text-[11px] uppercase tracking-[.16em] text-mute">Where you go</h3><ol className="mt-4 flex flex-col">{stops.map((stop) => <li key={stop} className="group flex gap-4"><span aria-hidden="true" className="flex w-3 shrink-0 flex-col items-center self-stretch"><span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-coral" /><span className="mt-1.5 w-px flex-1 bg-pill-line group-last:hidden" /></span><span className="flex-1 pb-4 text-[15px] leading-snug text-ink-2 group-last:pb-0">{stop}</span></li>)}</ol></div><button type="button" onClick={() => setDialog("highlights")} className="mt-6 inline-flex rounded-full border border-ink px-6 py-3 text-[12.5px] font-semibold uppercase tracking-[.08em] text-ink transition-colors hover:border-coral hover:bg-coral hover:text-paper">Read more about this tour</button></div>
+        <aside className="lg:sticky lg:top-[190px] lg:self-start"><div className="rounded-2xl border border-card-line bg-card p-6 md:p-7"><h3 className="font-serif text-[19px] font-semibold text-ink">Your tour at a glance</h3><dl className="mt-4 flex flex-col">{[["Length", "2 days, 1 nights"], ["Group", "Max 8"], ["Pace", "Balanced"], ["Stops", "2 stops"], ["Starts", stops[0]], ["Ends", stops[1]]].map(([label, value]) => <div key={label} className="flex items-baseline justify-between gap-4 border-t border-card-line py-3 first:border-t-0 first:pt-0"><dt className="flex shrink-0 items-center gap-2 font-mono text-[10.5px] uppercase tracking-[.12em] text-mute"><Icon name={label === "Length" ? "calendar" : label === "Group" ? "users" : label === "Pace" ? "pace" : label === "Stops" ? "pin" : label === "Starts" ? "compass" : "flag"} className="h-4 w-4 shrink-0 text-coral" />{label}</dt><dd className="min-w-0 text-right text-[14px] leading-snug text-ink">{value}</dd></div>)}</dl></div></aside>
+      </div></section>
+
+      <section className="mx-auto max-w-[1280px] px-5 py-12 md:px-10 md:py-16"><div className="mx-auto max-w-[880px] text-center"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="mx-auto h-7 w-7 text-coral/50"><path d="M9.6 5.4c-3.2 1.3-5.4 4.2-5.4 7.9 0 3.1 1.9 5.3 4.5 5.3 2.3 0 3.9-1.7 3.9-3.8 0-2-1.4-3.5-3.3-3.5-.4 0-.8.06-1 .13.35-1.8 2-3.3 3.9-4.1L9.6 5.4Zm10.1 0c-3.2 1.3-5.4 4.2-5.4 7.9 0 3.1 1.9 5.3 4.5 5.3 2.3 0 3.9-1.7 3.9-3.8 0-2-1.4-3.5-3.3-3.5-.4 0-.8.06-1 .13.35-1.8 2-3.3 3.9-4.1L19.7 5.4Z"/></svg><p className="mt-5 text-balance font-serif text-[26px] leading-[1.28] tracking-[-.01em] text-ink md:text-[38px]">{description}</p></div></section>
+
+      <section className="relative overflow-hidden bg-paper-warm pt-11 pb-8 md:pt-14 md:pb-10">
+        <Image src="/images/highlight-contours.svg" alt="" width={330} height={380} unoptimized className="pointer-events-none absolute -right-16 -top-28 hidden h-[380px] w-[330px] select-none lg:block" />
+        <Image src="/images/highlight-contours.svg" alt="" width={340} height={400} unoptimized className="pointer-events-none absolute -left-16 -bottom-32 hidden h-[400px] w-[340px] select-none lg:block" />
+        <div className="relative mx-auto max-w-[1280px] px-5 md:px-10"><h2 className="font-serif text-[32px] font-semibold leading-tight tracking-[-.01em] text-ink md:text-[46px]">Tour highlights</h2><ul className="mt-6 grid gap-x-10 md:mt-7 md:grid-cols-2">{days.map((day) => <li key={day.title} className="flex items-start gap-3.5 border-b border-card-line py-3 first:border-t md:py-3.5 md:[&:nth-child(2)]:border-t"><span aria-hidden="true" className="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full border border-coral" /><span className="text-[15.5px] leading-snug text-ink md:text-[17px]">{day.title}</span></li>)}</ul></div>
+        <div className="relative z-[1] mt-7 md:mt-9"><ul ref={carouselRef} onScroll={updateCarousel} className="hide-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pt-1 pe-5 pb-12 ps-[max(20px,calc((100%_-_1280px)/2_+_20px))] scroll-ps-[max(20px,calc((100%_-_1280px)/2_+_20px))] md:pe-10 md:ps-[max(40px,calc((100%_-_1280px)/2_+_40px))] md:scroll-ps-[max(40px,calc((100%_-_1280px)/2_+_40px))]">{days.map((day, index) => <HighlightCard key={day.title} src={day.image} caption={day.title} second={index === 1} />)}</ul><button type="button" aria-label="Previous photos" disabled={!carouselBounds.back} onClick={() => carouselRef.current?.scrollBy({ left: -460, behavior: "smooth" })} className="absolute start-3 top-1/2 flex h-11 w-11 -translate-y-10 items-center justify-center rounded-full border border-card-line bg-card text-ink shadow-tile-soft transition-colors hover:border-coral hover:text-coral disabled:cursor-default disabled:opacity-35 md:start-6"><Icon name="chevron" className="h-5 w-5 rotate-90" /></button><button type="button" aria-label="More photos" disabled={!carouselBounds.forward} onClick={() => carouselRef.current?.scrollBy({ left: 460, behavior: "smooth" })} className="absolute end-3 top-1/2 flex h-11 w-11 -translate-y-10 items-center justify-center rounded-full border border-card-line bg-card text-ink shadow-tile-soft transition-colors hover:border-coral hover:text-coral disabled:cursor-default disabled:opacity-35 md:end-6"><Icon name="chevron" className="h-5 w-5 -rotate-90" /></button></div>
+      </section>
+      <section id="itinerary" className="scroll-mt-[176px] md:scroll-mt-[140px]"><div className="mx-auto max-w-[1280px] px-5 pt-12 pb-6 text-center md:px-10 md:pt-16"><h2 className="font-serif text-[30px] font-semibold leading-tight text-ink md:text-[42px]">Itinerary in detail</h2><p className="mx-auto mt-3 max-w-[58ch] text-[15.5px] leading-relaxed text-mute md:text-[16.5px]">The route as our guides run it. Every day can be adjusted once we know who is travelling, so treat this as the shape of the trip rather than a fixed schedule.</p></div>
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]"><div className="mx-auto w-full max-w-[820px] px-5 md:px-10 lg:me-0 lg:ms-auto lg:max-w-none lg:pe-14"><ol>{days.map((day, index) => <li key={day.title} data-place="tangkoko" className="border-t border-card-line py-10 first:border-t-0 first:pt-2 md:py-12"><p className="font-mono text-[11.5px] uppercase tracking-[.14em] text-coral">Day {index + 1}</p><div className="mt-3 gap-8 md:grid md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]"><h3 className="font-serif text-[24px] font-semibold leading-[1.15] text-ink md:text-[28px]">{day.title}</h3><div className="mt-4 md:mt-0"><p className="text-[15.5px] leading-[1.7] text-ink-2">{day.description}</p><p className="mt-4 text-[13.5px] leading-relaxed text-mute">There are {day.more} more moments in this day. <a href={bookUrl} className="text-coral underline underline-offset-4 transition-colors hover:text-coral-deep">WhatsApp us</a></p></div></div><div className="mt-6 max-w-[560px]"><button type="button" aria-label={day.title} onClick={() => setDayPhotos({ photos: [day.image, ...day.thumbnails], index: 0, title: day.title })} className="group relative block aspect-[16/9] w-full overflow-hidden rounded-lg bg-ink/10 transition-opacity hover:opacity-95"><Image src={day.image} alt={day.title} fill sizes="(max-width: 1024px) 90vw, 560px" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" /></button><ul className="hide-scrollbar -mx-5 mt-3 flex gap-3 overflow-x-auto px-5 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">{day.thumbnails.map((image, photoIndex) => <li key={image} className="w-[132px] shrink-0 md:w-auto"><button type="button" aria-label={`${day.title}, photo ${photoIndex + 1}`} onClick={() => setDayPhotos({ photos: [day.image, ...day.thumbnails], index: photoIndex + 1, title: day.title })} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-md bg-ink/10 transition-opacity hover:opacity-95"><Image src={image} alt={`${day.title}, photo ${photoIndex + 1}`} fill sizes="(max-width: 768px) 132px, 100px" className="object-cover transition-transform duration-500 group-hover:scale-[1.08]" /></button></li>)}</ul></div></li>)}</ol></div><aside className="hidden lg:block"><div className="sticky top-[140px] h-[calc(100vh-180px)] w-full overflow-hidden border-y border-card-line bg-paper"><Image src="/images/route-map.svg" alt="Route from Manado to Tangkoko" fill unoptimized sizes="420px" className="object-cover" /></div></aside></div>
+      </section>
+
+      <section id="dates" className="mx-auto max-w-[1280px] scroll-mt-[176px] px-5 pt-12 pb-12 md:scroll-mt-[140px] md:px-10 md:pt-14 md:pb-14"><div className="grid items-start gap-8 rounded-2xl border border-card-line bg-card p-7 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:p-10"><div><p className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[.16em] text-coral"><Icon name="calendar" className="h-4 w-4" />Dates and prices</p><p className="mt-4 max-w-[42ch] text-[15.5px] leading-relaxed text-ink-2 md:text-[16.5px]">We do not publish fixed departures for this trip. It runs on the dates you choose, subject to boats, guides and permits. Tell us roughly when, and we will confirm what is possible.</p><div className="mt-7"><a href={bookUrl} target="_blank" rel="noreferrer" className="inline-flex rounded-full bg-coral px-7 py-3.5 text-[12.5px] font-semibold uppercase tracking-[.08em] text-paper transition-colors hover:bg-coral-deep">WhatsApp us</a></div></div><dl className="flex flex-col">{prices.map((price) => <div key={price.label} className="flex items-baseline justify-between gap-5 border-t border-card-line py-4 first:border-t-0 first:pt-0"><dt className="min-w-0"><span className="block text-[15px] text-ink">{price.label}</span><span className="mt-0.5 block text-[12.5px] leading-snug text-faint">{price.description}</span></dt><dd className="shrink-0 font-serif text-[24px] font-semibold text-ink md:text-[28px]">{price.price}</dd></div>)}</dl></div></section>
+
+      <div className="mx-auto max-w-[1280px] px-5 md:px-10"><section id="tour-faq" className="mb-16 scroll-mt-20 border-t border-card-line bg-paper-2 py-14 md:mb-20 md:py-16"><div className="mx-auto max-w-[900px] px-5 md:px-10"><h2 className="text-center font-serif text-[30px] font-semibold leading-[1.1] text-ink md:text-[38px]">Questions about this trip</h2><p className="mt-3 text-center text-[16px] leading-relaxed text-mute md:text-[17px]">Answered by the team who runs it.</p><div className="mt-10 flex justify-end"><button type="button" aria-expanded={expandedAll} onClick={() => setExpandedAll(!expandedAll)} className="text-[12.5px] font-semibold uppercase tracking-[.1em] text-coral transition-colors hover:text-coral-deep">{expandedAll ? "Collapse all" : "Expand all"}</button></div><div className="mt-4 border-t border-card-line">{faq.map((item) => <details key={item.question} open={expandedAll || undefined} className="group/faq border-b border-card-line"><summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-start text-[16px] font-semibold text-ink transition-colors hover:text-coral md:text-[17px] [&::-webkit-details-marker]:hidden">{item.question}<Icon name="chevron" className="h-4 w-4 shrink-0 text-mute transition-transform group-open/faq:rotate-180" /></summary><p className="pb-6 text-[15.5px] leading-[1.7] text-ink-2 md:text-[16px]">{item.answer}</p></details>)}</div></div></section></div>
+
+      <section className="relative overflow-hidden bg-paper-warm py-14 md:py-[72px]"><Image src="/images/related-waves.svg" alt="" fill unoptimized sizes="100vw" className="pointer-events-none absolute h-full w-full select-none object-fill" /><div className="relative mx-auto max-w-[1280px] px-5 md:px-10"><h2 className="text-center font-serif text-[30px] font-semibold leading-tight text-ink md:text-[40px]">Need more inspiration?</h2><span aria-hidden="true" className="mx-auto mt-5 block h-px w-[110px] bg-ochre/60" /><ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{recommendations.map((item) => <li key={item.title}><a className="group/insp flex h-full flex-col overflow-hidden rounded-lg bg-card shadow-tile-soft transition-shadow hover:shadow-sheet" href={`https://sulawesi.com${item.path}`}><span className="relative block aspect-[16/10] w-full overflow-hidden bg-ink"><Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover/insp:scale-[1.04]" /></span><span className="flex flex-1 flex-col items-center px-6 py-6 text-center"><span className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[.12em] text-ochre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-3.5 w-3.5"><path d="M12 3.6 Q19.4 3.9 20.3 11.7 T12.4 20.4 Q4.9 20.1 3.7 12.4 T12 3.6" /><path d="M12 7.4 Q11.9 10 12 12.2 Q14 13.4 15.6 14.3" /></svg>3 day trip</span><span className="mt-2.5 font-serif text-[20px] font-semibold leading-snug text-ink transition-colors group-hover/insp:text-coral md:text-[22px]">{item.title}</span><span className="mt-3 text-[14px] leading-relaxed text-mute">{item.description}</span><span className="mt-auto pt-6 font-serif text-[19px] font-semibold text-ochre md:text-[21px]">From {item.price}</span></span></a></li>)}</ul></div></section>
+
+      <SiteFooter />
+      <a href={bookUrl} target="_blank" rel="noreferrer" aria-label="WhatsApp us" className="fixed end-4 bottom-[104px] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-coral text-paper shadow-sheet transition-colors hover:bg-coral-deep md:end-6 md:bottom-[118px]"><Icon name="whatsapp" className="h-6 w-6" /></a>
+    </main>
+    {dayPhotos && <TourDialog kind="day" photos={dayPhotos.photos} initialIndex={dayPhotos.index} photoTitle={dayPhotos.title} onClose={() => setDayPhotos(null)} />}
+    {dialog && <TourDialog kind={dialog} onClose={() => setDialog(null)} />}
+    <RouteBar shown={routeVisible} />
+  </>;
+}
+
+function HighlightCard({ src, caption, second = false }: { src: string; caption: string; second?: boolean }) {
+  return <li className={`w-[280px] shrink-0 snap-start sm:w-[380px] lg:w-[440px] ${second ? "translate-y-8 md:translate-y-12" : ""}`}><div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-ink/10 sm:aspect-[7/5]"><Image src={src} alt={caption} fill sizes="(max-width: 639px) 280px, (max-width: 1023px) 380px, 440px" className="object-cover" /><span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-ink/80 to-transparent" /><p className="absolute inset-x-4 bottom-3.5 flex items-start gap-2 text-[13.5px] font-semibold leading-snug text-paper md:text-[15px]"><Icon name="pin" className="mt-0.5 h-4 w-4 shrink-0" />{caption}</p></div></li>;
+}
