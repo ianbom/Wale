@@ -24,7 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${sans.variable} ${serif.variable} ${mono.variable} ${hand.variable} ${display.variable}`}>
         {children}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "TravelAgency", name: brand.name, url: "https://waleadventure.com", logo: "https://waleadventure.com" + brand.logo, description: brand.description, email: brand.email, telephone: "+" + brand.phone, areaServed: "North Sulawesi, Indonesia", sameAs: [brand.instagram, brand.facebook] }).replace(/</g, "\\u003c") }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "TravelAgency", name: brand.name, url: "https://waleadventure.com", logo: "https://waleadventure.com" + brand.logo, description: brand.description, email: brand.email, telephone: "+" + brand.phone, areaServed: ["North Sulawesi", "South Sulawesi", "Central Sulawesi", "Gorontalo"], sameAs: [brand.instagram, brand.facebook] }).replace(/</g, "\\u003c") }} />
       </body>
     </html>
   );

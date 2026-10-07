@@ -5,11 +5,11 @@ import { metadataContent } from "@/lib/wale-content";
 
 const sections = {
   about: { title: "Our Story, Your Adventure", description: "Meet Wale Adventure, your local team for private tours and authentic experiences in North Sulawesi." },
-  tours: { title: "Private North Sulawesi Tours", description: "Choose a Minahasa Highlands, Tangkoko Wildlife or Bunaken Marine Adventure with Wale Adventure." },
-  destinations: { title: "Discover North Sulawesi", description: "Explore Tangkoko Nature Reserve, Tomohon Highlands and Bunaken National Marine Park with local guides." },
+  tours: { title: "Private Sulawesi Tours", description: "Explore 13 private and custom tours across North, South and Central Sulawesi and Gorontalo. Plan your dates and request a personal quotation." },
+  destinations: { title: "Discover Sulawesi", description: "Discover Bunaken, Tomohon, Tangkoko, Lembeh, Likupang, Bira, Rammang Rammang, Tana Toraja, Banggai Archipelago, Lake Poso, Luwuk, Togean and Gorontalo." },
   gallery: { title: "North Sulawesi in Pictures", description: "Wildlife, highland culture and marine adventures from Wale Adventure in North Sulawesi." },
   faq: { title: "Frequently Asked Questions", description: "Find out about Wale Adventure private tours, airport transfers, local guides and booking." },
-  contact: { title: "Plan Your Adventure", description: "Contact Wale Adventure on WhatsApp or by email to plan your private North Sulawesi tour." },
+  contact: { title: "Plan Your Adventure", description: "Contact Wale Adventure on WhatsApp or by email to plan your private Sulawesi tour." },
 } as const;
 
 export const dynamicParams = false;

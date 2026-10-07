@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { navigationMenus, brand, tours, whatsappUrl } from "@/lib/wale-content";
+import { navigationMenus, brand, featuredTours, whatsappUrl } from "@/lib/wale-content";
 const bookUrl = whatsappUrl();
 const contactUrl = bookUrl;
 import { Icon } from "./icons";
@@ -12,12 +12,13 @@ import { Icon } from "./icons";
 const navigation = [["About", "about"], ["Tours", "tours"], ["Destinations", "destinations"], ["Gallery", "gallery"], ["Contact", "contact"]] as const;
 const languages = [["en", "English"]] as const;
 
-export function SiteHeader({ hidden }: { hidden: boolean }) {
+export function SiteHeader({ hidden, overlay = false }: { hidden: boolean; overlay?: boolean }) {
   const pathname = usePathname();
   const [panel, setPanel] = useState<"menu" | "languages" | keyof typeof navigationMenus | null>(null);
   const [region, setRegion] = useState<number | null>(null);
   const closeMenuRef = useRef<HTMLButtonElement>(null);
   const menu = panel === "destinations" || panel === "tours" ? navigationMenus[panel] : null;
+  const clearOverlay = overlay && panel === null;
   const selectedPanel = menu?.panels[region === null ? 0 : region + 1];
   const toggleMenu = (name: "menu" | "languages") => setPanel(panel === name ? null : name);
 
@@ -33,10 +34,10 @@ export function SiteHeader({ hidden }: { hidden: boolean }) {
   }, [panel]);
 
   return <>
-    <header onMouseLeave={() => { if (menu) { setPanel(null); setRegion(null); } }} className={`fixed inset-x-0 top-0 z-40 border-b border-ink/10 bg-paper text-ink transition-[transform,opacity] duration-300 ${hidden ? "pointer-events-none -translate-y-full opacity-0" : "opacity-100"}`}>
+    <header onMouseLeave={() => { if (menu) { setPanel(null); setRegion(null); } }} className={`fixed inset-x-0 top-0 z-40 border-b transition-[transform,opacity,background-color,border-color] duration-300 ${clearOverlay ? "border-transparent bg-transparent text-paper" : "border-ink/10 bg-paper text-ink"} ${hidden ? "pointer-events-none -translate-y-full opacity-0" : "opacity-100"}`}>
       <nav aria-label="Primary" className="mx-auto flex h-[60px] max-w-[1400px] items-center gap-8 px-5 md:h-[72px] md:px-10">
-        <Link href="/" aria-label="Wale Adventure home" className="shrink-0"><Image src={brand.logo} alt="Wale Adventure" width={120} height={34} priority className="h-[34px] w-[120px] object-contain md:h-[38px] md:w-[134px]" /></Link>
-        <ul className="hidden items-center gap-[30px] lg:flex">{navigation.map(([name, path]) => <li key={name}><a href={`/${path}`} aria-expanded={path in navigationMenus ? panel === path : undefined} onMouseEnter={() => { if (path in navigationMenus) { setPanel(path as keyof typeof navigationMenus); setRegion(null); } else { setPanel(null); setRegion(null); } }} onFocus={() => { if (path in navigationMenus) { setPanel(path as keyof typeof navigationMenus); setRegion(null); } }} className="relative block py-1 text-[15px] font-bold tracking-[.01em] text-ink-2 transition-opacity hover:opacity-60">{name}{panel === path && <span aria-hidden="true" className="absolute inset-x-0 -bottom-0.5 h-[2px] bg-coral" />}</a></li>)}</ul>
+        <Link href="/" aria-label="Wale Adventure home" className="relative shrink-0"><Image src={brand.logo} alt="Wale Adventure" width={120} height={34} priority className="h-[34px] w-[120px] object-contain md:h-[38px] md:w-[134px]" />{clearOverlay && <Image src={brand.logo} alt="" aria-hidden="true" width={120} height={34} className="absolute inset-0 h-[34px] w-[120px] object-contain brightness-0 invert [clip-path:inset(0_0_0_30%)] md:h-[38px] md:w-[134px]" />}</Link>
+        <ul className="hidden items-center gap-[30px] lg:flex">{navigation.map(([name, path]) => <li key={name}><a href={`/${path}`} aria-expanded={path in navigationMenus ? panel === path : undefined} onMouseEnter={() => { if (path in navigationMenus) { setPanel(path as keyof typeof navigationMenus); setRegion(null); } else { setPanel(null); setRegion(null); } }} onFocus={() => { if (path in navigationMenus) { setPanel(path as keyof typeof navigationMenus); setRegion(null); } }} className={`relative block py-1 text-[15px] font-bold tracking-[.01em] transition-opacity hover:opacity-60 ${clearOverlay ? "text-paper" : "text-ink-2"}`}>{name}{panel === path && <span aria-hidden="true" className="absolute inset-x-0 -bottom-0.5 h-[2px] bg-coral" />}</a></li>)}</ul>
         <div className="ms-auto flex items-center gap-1.5 md:gap-2.5">
           <Link href="/tours" aria-label="Browse tours" className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors md:flex hover:bg-ink/8"><Icon name="search" className="h-5 w-5" /></Link>
           <div className="relative hidden md:block"><button type="button" onClick={() => toggleMenu("languages")} aria-expanded={panel === "languages"} aria-haspopup="menu" className="flex h-9 items-center gap-1 rounded-full px-2.5 text-[14px] font-bold tracking-[.04em] transition-colors hover:bg-ink/8">EN<Icon name="chevron" className="h-4 w-4" /></button>{panel === "languages" && <div role="menu" className="absolute end-0 top-10 z-[70] max-h-[70vh] w-48 overflow-y-auto rounded-lg border border-card-line bg-paper-2 p-2 shadow-sheet">{languages.map(([code, name]) => <a key={code} role="menuitem" href={pathname} className="block rounded px-3 py-2 text-[13px] hover:bg-paper-warm">{name}</a>)}</div>}</div>
@@ -76,7 +77,7 @@ export function SiteFooter() {
   const sections = [
     { heading: "Explore", entries: [["Home", "/"], ["About", "/about"], ["Tours", "/tours"], ["Gallery", "/gallery"]] },
     { heading: "Plan", entries: [["Destinations", "/destinations"], ["FAQ", "/faq"], ["Contact", "/contact"]] },
-    { heading: "Our Tours", entries: tours.map((tour) => [tour.title, `/tours/${tour.slug}`]) },
+    { heading: "Our Tours", entries: featuredTours.map((tour) => [tour.title, `/tours/${tour.slug}`]) },
   ];
   return <>
     <section className="relative overflow-hidden bg-sea-deep text-paper"><Image src="/images/cta-waves.svg" alt="" aria-hidden="true" fill unoptimized sizes="100vw" className="pointer-events-none absolute h-full w-full select-none object-fill" /><div className="relative mx-auto max-w-[1100px] px-5 py-16 text-center md:px-10 md:py-20"><h2 className="font-display text-[30px] font-bold leading-[1.1] tracking-[-.01em] md:text-[44px]">PLAN YOUR ADVENTURE</h2><a href={bookUrl} target="_blank" rel="noreferrer" className="mt-8 inline-flex h-14 items-center bg-ink px-9 text-[14px] font-semibold uppercase tracking-[.1em] text-paper transition-colors hover:bg-coral md:text-[15px]">Book Your Trip</a></div></section>
