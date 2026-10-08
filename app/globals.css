@@ -8,25 +8,26 @@
   --font-mono: var(--font-jetbrains-mono), monospace;
   --font-hand: var(--font-caveat), cursive;
   --font-display: var(--font-bricolage), var(--font-inter-tight), sans-serif;
-  --color-paper: #f6f1e7;
-  --color-paper-2: #fbf8f2;
-  --color-paper-warm: #ebe2cc;
-  --color-ink: #1a1612;
-  --color-ink-2: #3a332a;
-  --color-mute: #7a6f5f;
-  --color-faint: #c8bda7;
-  --color-pill-line: #cfcfcf;
-  --color-card-line: #e5e5e5;
-  --color-card: #fff;
-  --color-coral: #c9552b;
-  --color-coral-deep: #a3431f;
-  --color-ochre: #a8793a;
-  --color-earth: #5a3f24;
-  --color-sea: #1d4d5c;
-  --color-sea-deep: #0f3742;
-  --color-night: #15212b;
-  --shadow-tile-soft: 0 3px 14px rgb(26 22 18 / 7%);
-  --shadow-sheet: 0 8px 30px rgb(26 22 18 / 14%);
+  --color-paper: #FEF3E2;
+  --color-paper-2: #FEF3E2;
+  --color-paper-warm: color-mix(in srgb, #FEF3E2 85%, #F4AE52);
+  --color-ink: #2A1A0E;
+  --color-ink-2: color-mix(in srgb, #2A1A0E 85%, #FEF3E2);
+  --color-mute: color-mix(in srgb, #2A1A0E 70%, #FEF3E2);
+  --color-faint: color-mix(in srgb, #2A1A0E 65%, #FEF3E2);
+  --color-pill-line: color-mix(in srgb, #2A1A0E 55%, #FEF3E2);
+  --color-card-line: color-mix(in srgb, #2A1A0E 18%, #FEF3E2);
+  --color-card: color-mix(in srgb, #FEF3E2 94%, #F4AE52);
+  --color-coral: #D4621A;
+  --color-coral-deep: color-mix(in srgb, #D4621A 75%, #2A1A0E);
+  --color-on-coral: rgb(from #2A1A0E calc(r * 0.75) calc(g * 0.75) calc(b * 0.75));
+  --color-ochre: #F4AE52;
+  --color-earth: #2A1A0E;
+  --color-sea: #2A1A0E;
+  --color-sea-deep: #2A1A0E;
+  --color-night: #2A1A0E;
+  --shadow-tile-soft: 0 3px 14px rgb(42 26 14 / 7%);
+  --shadow-sheet: 0 8px 30px rgb(42 26 14 / 14%);
 }
 
 * {
@@ -69,7 +70,13 @@ input {
 
 ::selection {
   color: var(--color-paper);
-  background: var(--color-coral);
+  background: var(--color-coral-deep);
+}
+
+:is(button, a, input, summary):focus-visible {
+  outline: 2px solid var(--color-coral-deep);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px var(--color-paper);
 }
 
 @media (prefers-reduced-motion: reduce) {

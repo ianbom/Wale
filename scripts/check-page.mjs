@@ -1,5 +1,43 @@
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
+
+const paletteCss = await readFile("app/globals.css", "utf8");
+const baseColors = new Set(["#FEF3E2", "#F4AE52", "#D4621A", "#2A1A0E"]);
+function channels(color) {
+  return color.slice(1).match(/../g).map((channel) => parseInt(channel, 16));
+}
+function hex(values) {
+  return `#${values.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+const palette = Object.fromEntries([...paletteCss.matchAll(/--color-([\w-]+):\s*([^;]+);/gi)].map(([, token, value]) => {
+  for (const [color] of value.matchAll(/#[\da-f]{6}/gi)) assert.ok(baseColors.has(color.toUpperCase()), `${token}: palette-derived color`);
+  if (/^#[\da-f]{6}$/i.test(value)) return [token, value.toUpperCase()];
+  const mix = value.match(/^color-mix\(in srgb, (#[\da-f]{6}) (\d+)%, (#[\da-f]{6})\)$/i);
+  if (mix) return [token, hex(channels(mix[1]).map((channel, index) => channel * Number(mix[2]) / 100 + channels(mix[3])[index] * (100 - Number(mix[2])) / 100))];
+  const shade = value.match(/^rgb\(from (#[\da-f]{6}) calc\(r \* ([\d.]+)\) calc\(g \* \2\) calc\(b \* \2\)\)$/i);
+  assert.ok(shade, `${token}: supported palette derivation`);
+  return [token, hex(channels(shade[1]).map((channel) => channel * Number(shade[2])))];
+}));
+for (const [token, color] of Object.entries({ paper: "#FEF3E2", "paper-2": "#FEF3E2", ochre: "#F4AE52", coral: "#D4621A", ink: "#2A1A0E" })) {
+  assert.equal(palette[token], color, `Palette token ${token}`);
+}
+for (const token of ["earth", "sea", "night"]) {
+  assert.equal(palette[token], "#2A1A0E", `Legacy token ${token} maps to dark brown`);
+}
+assert.doesNotMatch(paletteCss, /color-mix\([^;]*(?:\bwhite\b|\bblack\b)/i, "Derived colors use only palette colors");
+function luminance(color) {
+  assert.match(color || "", /^#[\da-f]{6}$/i);
+  return color.slice(1).match(/../g).map((channel) => parseInt(channel, 16) / 255).map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4).reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+}
+for (const [foreground, background] of [["ink", "paper"], ["ink", "ochre"], ["on-coral", "coral"], ["paper", "coral-deep"], ["paper", "ink"], ...["paper", "paper-warm", "card"].flatMap((background) => ["ink-2", "mute", "faint", "coral-deep"].map((foreground) => [foreground, background]))]) {
+  const values = [luminance(palette[foreground]), luminance(palette[background])];
+  assert.ok((Math.max(...values) + 0.05) / (Math.min(...values) + 0.05) >= 4.5, `${foreground} on ${background}: accessible normal text`);
+}
+for (const file of (await readdir("public/images")).filter((file) => file.endsWith(".svg"))) {
+  for (const [color] of (await readFile(`public/images/${file}`, "utf8")).matchAll(/#[\da-f]{3,8}\b/gi)) assert.ok(baseColors.has(color.toUpperCase()), `${file}: decorative SVG uses palette colors`);
+}
+assert.ok(!(await readFile("components/destination-page.tsx", "utf8")).includes("#4a5a2e"), "Sample badge uses theme colors");
+console.log("Palette tokens, contrast pairs and decorative SVGs passed");
 
 const origin = process.env.TEST_ORIGIN || "http://127.0.0.1:3000";
 const regions = {
